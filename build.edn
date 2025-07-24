@@ -1,0 +1,18 @@
+{:main morris.core
+ :output-to "out/index.js"
+ :output-dir "out"
+ :optimizations :none
+ :infer-externs true
+ :target :bundle
+ :bundle-cmd {:none ["npx" "webpack" "./out/index.js" "-o" "out" "--mode" "development"]
+              :default ["npx" "webpack" "./out/index.js" "-o" "out"]}
+ :closure-defines {cljs.core/*global* "window"}
+ :pretty-print false
+ :optimize-constants true
+ :static-fns true
+ :parallel-build true
+
+ ; repl options
+ :watch "src"
+ :launch-browser false
+ :repl-requires [[morris.core :as m]]}

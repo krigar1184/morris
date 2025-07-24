@@ -1,0 +1,5 @@
+out
+.cpcache
+.shadow-cljs
+.lsp
+node_modules

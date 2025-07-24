@@ -1,0 +1,22 @@
+{
+  "name": "morris",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "create-react-class": "^15.7.0",
+    "process": "^0.11.10",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^3.1.7",
+    "webpack": "^5.100.2",
+    "webpack-cli": "^6.0.1"
+  }
+}
