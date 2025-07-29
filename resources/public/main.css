@@ -1,12 +1,14 @@
 .container {
   margin: 1vh;
+  width: 300px;
+  height: 300px;
 }
 
 .board {
   aspect-ratio: 1 / 1;
   background-color: brown;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   grid-template-rows: repeat(auto);
   justify-content: center;
   padding: 1em;
@@ -18,4 +20,11 @@
   border-width: 1px;
   border-color: black;
   border-style: solid;
+  text-align: center;
+}
+
+.square > .inner {
+  position: relative;
+  top: 49%;
+  cursor: pointer;
 }

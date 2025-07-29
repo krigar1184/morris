@@ -3,3 +3,4 @@ out
 .shadow-cljs
 .lsp
 node_modules
+.clj-kondo
