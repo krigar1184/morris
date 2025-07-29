@@ -16,28 +16,41 @@
                   '(5 1) nil '(5 3) nil '(5 5) nil
                   '(6 0) nil '(6 3) nil '(6 6) nil})
 
+; -- STATE START
 (def current-coords (r/atom init-coords))
-
-; state
 (def game-status (r/atom :not-started))
-
 (def player1 {:name (r/atom "player 1") :men-left (r/atom 9) :color :white})
 (def player2 {:name (r/atom "player 2") :men-left (r/atom 9) :color :black})
-
 (def turn (r/atom 0))
+; -- STATE END
+
+(defn- init-game []
+  (reset! game-status :started))
+
+(defn- reset-game [_]
+  (reset! current-coords init-coords)
+  (reset! turn 1)
+  (reset! game-status :placing)
+  (reset! (get player1 :men-left) 9)
+  (reset! (get player2 :men-left) 9))
+
+(defn- get-current-player [turn]
+  (if (odd? turn) player1 player2))
 
 (defn- on-square-click [i j]
-  (let* [key (list i j)
-         new-value (get @current-coords key)]
-        (do (swap! current-coords assoc key (not new-value))
-            (swap! turn inc))))
+  (if (= (+ @(get player1 :men-left) @(get player2 :men-left)) 0) (reset! game-status :moving)
+      (let* [key (list i j)
+             player (get-current-player @turn)]
+            (do (swap! current-coords assoc key (get player :color))
+                (swap! (get player :men-left) dec)
+                (swap! turn inc)))))
 
 (defn- ui-board []
   (let* [coords @current-coords
-         player (if (odd? @turn) player1 player2)]
+         player (get-current-player @turn)]
         [:div [:div.header
                [:p (str @(get player :name) " turn")]
-               [:p (get {} :name "")]]
+               [:p (str "Men left: " @(get player :men-left))]]
          [:div.board
           (for [i (range 0 7) j (range 0 7)]
             (let* [k (list i j)]
@@ -48,19 +61,10 @@
                                            [:span {:style {:color (get coords k)}} \u25c9])]
                     ^{:key (str i j)} [:div.square.empty])))]]))
 
-(defn- init-game []
-  (do
-    (reset! game-status :started)
-    (.log js/console "game started")))
-
-(defn- reset-game [_]
-  (reset! current-coords init-coords)
-  (reset! turn 0)
-  (reset! game-status :placing))
-
 (defn- set-player-name [event] ; TODO refactor
-  (if (= (-> event .-target .-name) "player1_name") (reset! (get player1 :name) (-> event .-target .-value))
-      (reset! (get player2 :name) (-> event .-target .-value))))
+  (if (= (-> event .-target .-name) "player1_name")
+    (reset! (get player1 :name) (-> event .-target .-value))
+    (reset! (get player2 :name) (-> event .-target .-value))))
 
 (defn- ui-start []
   [:div.container
@@ -77,10 +81,10 @@
           [:label {:id "player2_name"}]
           [:input {:name "player2_name" :default-value @(get player2 :name) :type :text :on-blur set-player-name}]
           [:br] [:br] [:input {:type :button :value "Play!" :on-click #(do (swap! turn inc) (reset! game-status :placing))}]]
-         (= @game-status :placing) [:div [ui-board]
-                                    [:br]
-                                    [:div.footer
-                                     [:input {:type :button :value "Reset game" :on-click reset-game}]]])])
+         (or (= @game-status :placing) (= @game-status :moving)) [:div [ui-board]
+                                                                  [:br]
+                                                                  [:div.footer
+                                                                   [:input {:type :button :value "Reset game" :on-click reset-game}]]])])
 
 (defn ^:export ^:dev/after-load run []
   (rdomc/render @root [ui-start]))
