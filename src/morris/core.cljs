@@ -37,7 +37,10 @@
 (defn- get-current-player [turn]
   (if (odd? turn) player1 player2))
 
-(defn- on-square-click [i j]
+(defn has-mill? [i j]
+  true)
+
+(defn- place-piece [i j]
   (if (= (+ @(get player1 :men-left) @(get player2 :men-left)) 0) (reset! game-status :moving)
       (let* [key (list i j)
              player (get-current-player @turn)]
@@ -56,7 +59,7 @@
             (let* [k (list i j)]
                   (if (contains? coords k)
                     ^{:key (str i j)} [:div.square
-                                       {:on-click #(apply on-square-click [i j])}
+                                       {:on-click #(apply place-piece [i j])}
                                        (if (nil? (get coords k)) \u25cf
                                            [:span {:style {:color (get coords k)}} \u25c9])]
                     ^{:key (str i j)} [:div.square.empty])))]]))

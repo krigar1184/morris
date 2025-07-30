@@ -1,9 +1,14 @@
 {:nrepl {:port 3333}
- :dev-http {9001 ["out/public" "resources/public"]}
+ :dev-http {9001 ["out/public" "resources/public"]
+            9002 ["out/test" "resources/index.html"]}
  :deps true
- :builds {:morris {:output-dir "out/public/js"
-                   :target :browser
-                   :asset-path "/js"
-                   :modules {:main {:init-fn morris.core/run}}
-                   :devtools {:repl-init-ns morris.core
-                              :repl-pprint true}}}}
+ :builds {:dev {:output-dir "out/public/js"
+                :target :browser
+                :asset-path "/js"
+                :modules {:main {:init-fn morris.core/run}}
+                :source-map true
+                :devtools {:repl-init-ns morris.core
+                           :repl-pprint true}}
+          :test {:target :browser-test
+                 :asset-path "/js"
+                 :test-dir "out/test"}}}
