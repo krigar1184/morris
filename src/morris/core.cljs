@@ -56,12 +56,23 @@
 (defn- get-current-player [turn]
   (if (odd? turn) player1 player2))
 
-(defn get-mills [coords]
-  (let* [grouped-fields (->> coords (filter (fn [[_ v]] (not (nil? v)))) (group-by #(second %)))
+(defn get-mills [coords] ; TODO refactor
+  (let* [grouped-fields (->> coords (group-by #(second %)))
          whites (:white grouped-fields)
-         blacks (:black grouped-fields)]
-        {:white (->> whites (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
-         :black (->> blacks (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))}))
+         blacks (:black grouped-fields)
+         mapped-whites (->> whites (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
+         mapped-blacks (->> blacks (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
+         whites-by-i (partition-by first mapped-whites)
+         whites-by-j (partition-by second mapped-whites)
+         blacks-by-i (partition-by first mapped-blacks)
+         blacks-by-j (partition-by second mapped-blacks)
+         grouped-whites (->> (concat whites-by-i whites-by-j)
+                             (filterv #(= (count %) 3))
+                             first
+                             vec)
+         grouped-blacks (->> (concat blacks-by-i blacks-by-j)
+                             (filterv #(= (count %) 3)) first vec)]
+        {:white grouped-whites :black grouped-blacks}))
 
 (defn- place-piece [i j]
   (if (= (+ @(get player1 :men-left) @(get player2 :men-left)) 0) (reset! game-status :moving)
