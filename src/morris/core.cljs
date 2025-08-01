@@ -56,19 +56,20 @@
 (defn- get-current-player [turn]
   (if (odd? turn) player1 player2))
 
-(defn get-mills [coords] ; TODO refactor
+(defn- get-mills-from-color-group [coords]
+  (let* [mapped (->> coords
+                     (map (fn [[[i j] _]] [i j]))
+                     (sort-by (fn [[i j]] [i j])))
+         mapped-by-i (->> mapped (group-by first) vals)
+         mapped-by-j (->> mapped (group-by second) vals)]
+
+        (->> (concat mapped-by-i mapped-by-j) sort vec)))
+
+(defn get-mills [coords]
   (let* [grouped-fields (->> coords (group-by #(second %)))
          whites (:white grouped-fields)
-         blacks (:black grouped-fields)
-         mapped-whites (->> whites (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
-         mapped-blacks (->> blacks (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
-         whites-by-i (->> mapped-whites (group-by first) vals (filter #(= (count %) 3)))
-         whites-by-j (->> mapped-whites (group-by second) vals (filter #(= (count %) 3)))
-         blacks-by-i (->> mapped-blacks (group-by first) vals (filter #(= (count %) 3)))
-         blacks-by-j (->> mapped-blacks (group-by second) vals (filter #(= (count %) 3)))
-         grouped-whites (->> (concat whites-by-i whites-by-j) sort vec)
-         grouped-blacks (->> (concat blacks-by-i blacks-by-j) sort vec)]
-        {:white grouped-whites :black grouped-blacks}))
+         blacks (:black grouped-fields)]
+        {:white (get-mills-from-color-group whites) :black (get-mills-from-color-group blacks)}))
 
 (defn- place-piece [i j]
   (if (= (+ @(get player1 :men-left) @(get player2 :men-left)) 0) (reset! game-status :moving)
