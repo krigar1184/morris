@@ -62,16 +62,12 @@
          blacks (:black grouped-fields)
          mapped-whites (->> whites (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
          mapped-blacks (->> blacks (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
-         whites-by-i (partition-by first mapped-whites)
-         whites-by-j (partition-by second mapped-whites)
-         blacks-by-i (partition-by first mapped-blacks)
-         blacks-by-j (partition-by second mapped-blacks)
-         grouped-whites (->> (concat whites-by-i whites-by-j)
-                             (filterv #(= (count %) 3))
-                             first
-                             vec)
-         grouped-blacks (->> (concat blacks-by-i blacks-by-j)
-                             (filterv #(= (count %) 3)) first vec)]
+         whites-by-i (->> mapped-whites (group-by first) vals (filter #(= (count %) 3)))
+         whites-by-j (->> mapped-whites (group-by second) vals (filter #(= (count %) 3)))
+         blacks-by-i (->> mapped-blacks (group-by first) vals (filter #(= (count %) 3)))
+         blacks-by-j (->> mapped-blacks (group-by second) vals (filter #(= (count %) 3)))
+         grouped-whites (->> (concat whites-by-i whites-by-j) sort vec)
+         grouped-blacks (->> (concat blacks-by-i blacks-by-j) sort vec)]
         {:white grouped-whites :black grouped-blacks}))
 
 (defn- place-piece [i j]
@@ -84,10 +80,13 @@
 
 (defn- ui-board []
   (let* [coords @current-coords
-         player (get-current-player @turn)]
+         player (get-current-player @turn)
+         current-mills (get-mills @current-coords)]
         [:div [:div.header
                [:p (str @(get player :name) " turn")]
-               [:p (str "Men left: " @(get player :men-left))]]
+               [:p (str "Men left: " @(get player :men-left))]
+               [:p (str "White mills: " (get current-mills :white))]
+               [:p (str "Black mills: " (get current-mills :black))]]
          [:div.board
           (for [i (range 0 7) j (range 0 7)]
             (let* [k (list i j)]
