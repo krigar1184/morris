@@ -8,13 +8,32 @@
 (defonce app-container (.getElementById js/document "app"))
 (defonce root (delay (rdomc/create-root app-container)))
 
-(def init-coords {'(0 0) nil '(0 3) nil '(0 6) nil
-                  '(1 1) nil '(1 3) nil '(1 5) nil
-                  '(2 2) nil '(2 3) nil '(2 4) nil
-                  '(3 0) nil '(3 1) nil '(3 2) nil  '(3 4) nil '(3 5) nil '(3 6) nil
-                  '(4 2) nil '(4 3) nil '(4 4) nil
-                  '(5 1) nil '(5 3) nil '(5 5) nil
-                  '(6 0) nil '(6 3) nil '(6 6) nil})
+(def possible-mills {; horizontal
+                     [[0 0] [0 3] [0 6]] true
+                     [[1 1] [1 3] [1 5]] true
+                     [[2 2] [2 3] [2 4]] true
+                     [[3 0] [3 1] [3 2]] true
+                     [[3 4] [3 5] [3 6]] true
+                     [[4 2] [4 3] [4 4]] true
+                     [[5 1] [5 3] [5 5]] true
+                     [[6 0] [6 3] [6 6]] true
+                     ; vertical
+                     [[0 0] [3 0] [6 0]] true
+                     [[1 1] [3 1] [5 1]] true
+                     [[2 2] [3 2] [4 2]] true
+                     [[0 3] [1 3] [2 3]] true
+                     [[4 3] [5 3] [6 3]] true
+                     [[2 4] [3 4] [4 4]] true
+                     [[1 5] [3 5] [5 5]] true
+                     [[0 6] [3 6] [6 6]] true})
+
+(def init-coords {[0 0] nil [0 3] nil [0 6] nil
+                  [1 1] nil [1 3] nil [1 5] nil
+                  [2 2] nil [2 3] nil [2 4] nil
+                  [3 0] nil [3 1] nil [3 2] nil  [3 4] nil [3 5] nil [3 6] nil
+                  [4 2] nil [4 3] nil [4 4] nil
+                  [5 1] nil [5 3] nil [5 5] nil
+                  [6 0] nil [6 3] nil [6 6] nil})
 
 ; -- STATE START
 (def current-coords (r/atom init-coords))
@@ -37,12 +56,16 @@
 (defn- get-current-player [turn]
   (if (odd? turn) player1 player2))
 
-(defn has-mill? [i j]
-  true)
+(defn get-mills [coords]
+  (let* [grouped-fields (->> coords (filter (fn [[_ v]] (not (nil? v)))) (group-by #(second %)))
+         whites (:white grouped-fields)
+         blacks (:black grouped-fields)]
+        {:white (->> whites (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))
+         :black (->> blacks (map (fn [[[i j] _]] [i j])) (sort-by (fn [[i j]] [i j])))}))
 
 (defn- place-piece [i j]
   (if (= (+ @(get player1 :men-left) @(get player2 :men-left)) 0) (reset! game-status :moving)
-      (let* [key (list i j)
+      (let* [key [i j]
              player (get-current-player @turn)]
             (do (swap! current-coords assoc key (get player :color))
                 (swap! (get player :men-left) dec)

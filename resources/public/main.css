@@ -28,3 +28,9 @@
   top: 49%;
   cursor: pointer;
 }
+
+input[type="button"] {
+  width: 80px;
+  height: 50px;
+  border-radius: 5px;
+}

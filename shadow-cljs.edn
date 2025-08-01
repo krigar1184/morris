@@ -1,6 +1,6 @@
 {:nrepl {:port 3333}
  :dev-http {9001 ["out/public" "resources/public"]
-            9002 ["out/test" "resources/index.html"]}
+            9002 "out/test"}
  :deps true
  :builds {:dev {:output-dir "out/public/js"
                 :target :browser
