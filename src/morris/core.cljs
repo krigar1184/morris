@@ -73,11 +73,11 @@
 
 (defn- place-piece [i j]
   (if (= (+ @(get player1 :men-left) @(get player2 :men-left)) 0) (reset! game-status :moving)
-      (let* [key [i j]
-             player (get-current-player @turn)]
-            (do (swap! current-coords assoc key (get player :color))
-                (swap! (get player :men-left) dec)
-                (swap! turn inc)))))
+      (let* [key [i j] player (get-current-player @turn)]
+            (if (not (nil? (get @current-coords key))) nil
+                (do (swap! current-coords assoc key (get player :color))
+                    (swap! (get player :men-left) dec)
+                    (swap! turn inc))))))
 
 (defn- ui-board []
   (let* [coords @current-coords
