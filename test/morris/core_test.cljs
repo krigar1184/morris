@@ -64,4 +64,15 @@
           [0 6] :white, [1 1] :black, [6 0] :white,
           [6 3] nil, [3 5] nil, [6 6] nil,
           [0 3] :white, [3 6] nil, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[0 0] [0 3] [0 6]] [[0 0] [3 0] [6 0]]] :black [[[1 1] [1 3] [1 5]] [[1 1] [3 1] [5 1]]]}))))
+        (is (= (subject/get-mills coords) {:white [[[0 0] [0 3] [0 6]] [[0 0] [3 0] [6 0]]]
+                                           :black [[[1 1] [1 3] [1 5]] [[1 1] [3 1] [5 1]]]})))
+  (let* [coords
+         {[4 3] nil, [3 4] :black, [0 0] nil,
+          [5 3] nil, [2 2] nil, [1 5] nil,
+          [3 2] :white, [2 4] nil, [4 2] nil,
+          [1 3] nil, [5 5] nil, [2 3] nil,
+          [3 1] :black, [5 1] nil, [3 0] :white,
+          [0 6] nil, [1 1] nil, [6 0] nil,
+          [6 3] nil, [3 5] :white, [6 6] nil,
+          [0 3] nil, [3 6] :black, [4 4] nil}]
+        (is (= (subject/get-mills coords) {:white [] :black []}))))

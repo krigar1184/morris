@@ -63,7 +63,7 @@
          mapped-by-i (->> mapped (group-by first) vals)
          mapped-by-j (->> mapped (group-by second) vals)]
 
-        (->> (concat mapped-by-i mapped-by-j) sort vec)))
+        (->> (concat mapped-by-i mapped-by-j) sort vec (filter #(contains? possible-mills %)))))
 
 (defn get-mills [coords]
   (let* [grouped-fields (->> coords (group-by #(second %)))
