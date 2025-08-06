@@ -7,40 +7,40 @@
 
 (defonce app-container (.getElementById js/document "app"))
 (defonce root (delay (rdomc/create-root app-container)))
-
-(def possible-mills {; horizontal
-                     [[0 0] [0 3] [0 6]] true
-                     [[1 1] [1 3] [1 5]] true
-                     [[2 2] [2 3] [2 4]] true
-                     [[3 0] [3 1] [3 2]] true
-                     [[3 4] [3 5] [3 6]] true
-                     [[4 2] [4 3] [4 4]] true
-                     [[5 1] [5 3] [5 5]] true
-                     [[6 0] [6 3] [6 6]] true
+(defonce possible-mills {; horizontal
+                         [[0 0] [0 3] [0 6]] true
+                         [[1 1] [1 3] [1 5]] true
+                         [[2 2] [2 3] [2 4]] true
+                         [[3 0] [3 1] [3 2]] true
+                         [[3 4] [3 5] [3 6]] true
+                         [[4 2] [4 3] [4 4]] true
+                         [[5 1] [5 3] [5 5]] true
+                         [[6 0] [6 3] [6 6]] true
                      ; vertical
-                     [[0 0] [3 0] [6 0]] true
-                     [[1 1] [3 1] [5 1]] true
-                     [[2 2] [3 2] [4 2]] true
-                     [[0 3] [1 3] [2 3]] true
-                     [[4 3] [5 3] [6 3]] true
-                     [[2 4] [3 4] [4 4]] true
-                     [[1 5] [3 5] [5 5]] true
-                     [[0 6] [3 6] [6 6]] true})
-
-(def init-coords {[0 0] nil [0 3] nil [0 6] nil
-                  [1 1] nil [1 3] nil [1 5] nil
-                  [2 2] nil [2 3] nil [2 4] nil
-                  [3 0] nil [3 1] nil [3 2] nil  [3 4] nil [3 5] nil [3 6] nil
-                  [4 2] nil [4 3] nil [4 4] nil
-                  [5 1] nil [5 3] nil [5 5] nil
-                  [6 0] nil [6 3] nil [6 6] nil})
+                         [[0 0] [3 0] [6 0]] true
+                         [[1 1] [3 1] [5 1]] true
+                         [[2 2] [3 2] [4 2]] true
+                         [[0 3] [1 3] [2 3]] true
+                         [[4 3] [5 3] [6 3]] true
+                         [[2 4] [3 4] [4 4]] true
+                         [[1 5] [3 5] [5 5]] true
+                         [[0 6] [3 6] [6 6]] true})
+(defonce init-coords {[0 0] nil [0 3] nil [0 6] nil
+                      [1 1] nil [1 3] nil [1 5] nil
+                      [2 2] nil [2 3] nil [2 4] nil
+                      [3 0] nil [3 1] nil [3 2] nil  [3 4] nil [3 5] nil [3 6] nil
+                      [4 2] nil [4 3] nil [4 4] nil
+                      [5 1] nil [5 3] nil [5 5] nil
+                      [6 0] nil [6 3] nil [6 6] nil})
 
 ; -- STATE START
 (def current-coords (r/atom init-coords))
 (def game-status (r/atom :not-started))
-(def player1 {:name (r/atom "player 1") :men-left (r/atom 9) :color :white})
-(def player2 {:name (r/atom "player 2") :men-left (r/atom 9) :color :black})
+(def player1 {:name (r/atom "player 1") :pieces-left (r/atom 9) :color :white})
+(def player2 {:name (r/atom "player 2") :pieces-left (r/atom 9) :color :black})
 (def turn (r/atom 0))
+(def pieces-left-this-turn (r/atom 1))
+(def piece-removed? (r/atom false))
 ; -- STATE END
 
 (defn- init-game []
@@ -50,53 +50,95 @@
   (reset! current-coords init-coords)
   (reset! turn 1)
   (reset! game-status :placing)
-  (reset! (get player1 :men-left) 9)
-  (reset! (get player2 :men-left) 9))
+  (reset! (get player1 :pieces-left) 9)
+  (reset! (get player2 :pieces-left) 9)
+  (reset! pieces-left-this-turn 1)
+  (reset! piece-removed? false))
 
 (defn- get-current-player [turn]
   (if (odd? turn) player1 player2))
 
-(defn- get-mills-from-color-group [coords]
-  (let* [mapped (->> coords
-                     (map (fn [[[i j] _]] [i j]))
-                     (sort-by (fn [[i j]] [i j])))
-         mapped-by-i (->> mapped (group-by first) vals)
-         mapped-by-j (->> mapped (group-by second) vals)]
+(defn- is-mill? [coords cmp]
+  (contains? possible-mills (sort-by cmp coords)))
 
-        (->> (concat mapped-by-i mapped-by-j) sort vec (filter #(contains? possible-mills %)))))
+(defn- get-mills-from-color-group [coords]
+  (let* [mapped-by-i (->> coords
+                          (group-by first)
+                          vals
+                          (map #(partition 3 1 %))
+                          (map #(map (fn [v] (sort-by second v)) %))
+                          (map #(filter (fn [v] (is-mill? v second)) %)))
+         mapped-by-j (->> coords
+                          (group-by second)
+                          vals
+                          (map #(partition 3 1 %))
+                          (map #(map (fn [v] (sort-by first v)) %))
+                          (map #(filter (fn [v] (is-mill? v first)) %)))]
+
+        (->> (concat mapped-by-i mapped-by-j)
+             (remove empty?)
+             (map #(vec (first %)))
+             vec)))
 
 (defn get-mills [coords]
-  (let* [grouped-fields (->> coords (group-by #(second %)))
+  (let* [grouped-fields (->> coords (group-by second))
          whites (:white grouped-fields)
          blacks (:black grouped-fields)]
-        {:white (get-mills-from-color-group whites) :black (get-mills-from-color-group blacks)}))
+        {:white (->> whites
+                     keys
+                     get-mills-from-color-group)
+         :black (->> blacks
+                     keys
+                     get-mills-from-color-group)}))
 
-(defn- place-piece [i j]
-  (if (= (+ @(get player1 :men-left) @(get player2 :men-left)) 0) (reset! game-status :moving)
-      (let* [key [i j] player (get-current-player @turn)]
-            (if (not (nil? (get @current-coords key))) nil
-                (do (swap! current-coords assoc key (get player :color))
-                    (swap! (get player :men-left) dec)
-                    (swap! turn inc))))))
+(defn can-remove? [mills]
+  (if @piece-removed? false
+      (> (count mills) 0)))
+
+(defn- place-or-remove-piece [i j mills]
+  (if (= (+ @(get player1 :pieces-left) @(get player2 :pieces-left)) 0)
+    (reset! game-status :moving)
+    (let* [key [i j]
+           player (get-current-player @turn)]
+          (cond
+            (and (= 0 @pieces-left-this-turn) (can-remove? (get mills (get player :color))))
+            (do (swap! current-coords assoc key nil)
+                (swap! piece-removed? not))
+            (not (nil? (get @current-coords key))) nil
+            (= @pieces-left-this-turn 0) nil
+            :else (do (swap! current-coords assoc key (get player :color))
+                      (swap! pieces-left-this-turn dec))))))
+
+(defn- ui-next-turn []
+  (let* [player (get-current-player @turn)]
+        (swap! (get player :pieces-left) dec)
+        (swap! turn inc)
+        (swap! piece-removed? not)
+        (reset! pieces-left-this-turn 1)))
 
 (defn- ui-board []
   (let* [coords @current-coords
          player (get-current-player @turn)
          current-mills (get-mills @current-coords)]
         [:div [:div.header
+               [:p (str "game status" @game-status)]
                [:p (str @(get player :name) " turn")]
-               [:p (str "Men left: " @(get player :men-left))]
+               [:p (str "pieces left: " @(get player :pieces-left))]
                [:p (str "White mills: " (get current-mills :white))]
-               [:p (str "Black mills: " (get current-mills :black))]]
+               [:p (str "Black mills: " (get current-mills :black))]
+               (when (can-remove? (get current-mills (get player :color)))
+                 [:p "You can remove a piece."])]
          [:div.board
           (for [i (range 0 7) j (range 0 7)]
             (let* [k (list i j)]
                   (if (contains? coords k)
                     ^{:key (str i j)} [:div.square
-                                       {:on-click #(apply place-piece [i j])}
+                                       {:on-click #(apply place-or-remove-piece [i j current-mills])}
                                        (if (nil? (get coords k)) \u25cf
                                            [:span {:style {:color (get coords k)}} \u25c9])]
-                    ^{:key (str i j)} [:div.square.empty])))]]))
+                    ^{:key (str i j)} [:div.square.empty])))]
+         [:br]
+         [:input {:type :button :value "Next turn" :on-click ui-next-turn}]]))
 
 (defn- set-player-name [event] ; TODO refactor
   (if (= (-> event .-target .-name) "player1_name")
