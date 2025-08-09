@@ -8,7 +8,8 @@
                 :modules {:main {:init-fn morris.core/run}}
                 :source-map true
                 :devtools {:repl-init-ns morris.core
-                           :repl-pprint true}}
+                           :repl-pprint true
+                           :preloads [devtools.preload]}}
           :test {:target :browser-test
                  :asset-path "/js"
                  :test-dir "out/test"}}}
