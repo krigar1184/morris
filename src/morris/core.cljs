@@ -65,25 +65,29 @@
   (loop [i 0 acc []]
     (if (>= i (count mills)) (filter #(is-mill? cmp %) acc)
         (let [m (nth mills i)
+              parts (partition 3 1 m)
               [a b] (split-at 3 m)]
-          (recur (inc i) (conj acc a b))))))
+          (recur
+           (inc i)
+           (apply conj acc
+                  (filter #(is-mill? cmp %) parts)))))))
 
 (defn- get-mills-from-color-group [coords]
-  (let* [cols (->> coords
+  (let* [rows (->> coords
                    (group-by first)
                    vals
                    (filter #(>= (count %) 3))
                    (mapv #(sort-by second %))
                    (remove empty?)
                    (partition-mills second))
-         rows (->> coords
+         cols (->> coords
                    (group-by second)
                    vals
                    (filter #(>= (count %) 3))
                    (mapv #(sort-by first %))
                    (remove empty?)
                    (partition-mills second))]
-        (->> (concat rows cols)
+        (->> (concat cols rows)
              (map #(map vec %)))))
 
 (defn get-mills [coords]
