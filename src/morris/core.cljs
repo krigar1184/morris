@@ -1,8 +1,8 @@
 (ns morris.core
   (:require
    [cljs.core :as c]
+   [morris.state :as state]
    [morris.utils :refer [log]]
-   [reagent.core :as r]
    [reagent.dom.client :as rdomc]))
 
 (set! *warn-on-infer* true)
@@ -27,40 +27,24 @@
                          [[2 4] [3 4] [4 4]] true
                          [[1 5] [3 5] [5 5]] true
                          [[0 6] [3 6] [6 6]] true})
-(defonce init-coords {[0 0] nil [0 3] nil [0 6] nil
-                      [1 1] nil [1 3] nil [1 5] nil
-                      [2 2] nil [2 3] nil [2 4] nil
-                      [3 0] nil [3 1] nil [3 2] nil  [3 4] nil [3 5] nil [3 6] nil
-                      [4 2] nil [4 3] nil [4 4] nil
-                      [5 1] nil [5 3] nil [5 5] nil
-                      [6 0] nil [6 3] nil [6 6] nil})
-
-; -- STATE START
-(def current-coords (r/atom init-coords))
-(def game-status (r/atom :not-started))
-(def player1 {:name (r/atom "player 1") :pieces-left (r/atom 9) :color :white})
-(def player2 {:name (r/atom "player 2") :pieces-left (r/atom 9) :color :black})
-(def turn (r/atom 0))
-(def pieces-left-this-turn (r/atom 1))
-(def piece-removed? (r/atom false))
-; -- STATE END
 
 (defn- init-game []
-  (reset! game-status :started))
+  (reset! state/game-status :started))
 
 (defn- reset-game [_]
-  (reset! current-coords init-coords)
-  (reset! turn 1)
-  (reset! game-status :placing)
-  (reset! (get player1 :pieces-left) 9)
-  (reset! (get player2 :pieces-left) 9)
-  (reset! pieces-left-this-turn 1)
-  (reset! piece-removed? false))
+  (reset! state/current-coords state/init-coords)
+  (reset! state/turn 1)
+  (reset! state/game-status :placing)
+  (reset! (get state/player1 :pieces-left) 9)
+  (reset! (get state/player2 :pieces-left) 9)
+  (reset! state/pieces-left-this-turn 1)
+  (reset! state/piece-removed? false))
 
 (defn- get-current-player [turn]
-  (if (odd? turn) player1 player2))
+  (if (odd? turn) state/player1 state/player2))
 
 (defn- is-mill? [cmp coords]
+  (log coords)
   (contains? possible-mills (sort-by cmp coords)))
 
 (defn- partition-mills [cmp mills]
@@ -100,36 +84,36 @@
      :black mb}))
 
 (defn can-remove? [mills]
-  (if @piece-removed? false
+  (if @state/piece-removed? false
       (> (count mills) 0)))
 
 (defn- place-or-remove-piece [i j mills]
-  (if (= 0 (+ @(get player1 :pieces-left) @(get player2 :pieces-left)))
-    (reset! game-status :moving)
+  (if (= 0 (+ @(get state/player1 :pieces-left) @(get state/player2 :pieces-left)))
+    (reset! state/game-status :moving)
     (let [key [i j]
-          player (get-current-player @turn)]
+          player (get-current-player @state/turn)]
       (cond
-        (and (= 0 @pieces-left-this-turn) (can-remove? (get mills (get player :color))))
-        (do (swap! current-coords assoc key nil)
-            (swap! piece-removed? not))
-        (not (nil? (get @current-coords key))) nil
-        (= 0 @pieces-left-this-turn) nil
-        :else (do (swap! current-coords assoc key (get player :color))
-                  (swap! pieces-left-this-turn dec))))))
+        (and (= 0 @state/pieces-left-this-turn) (can-remove? (get mills (get player :color))))
+        (do (swap! state/current-coords assoc key nil)
+            (swap! state/piece-removed? not))
+        (not (nil? (get @state/current-coords key))) nil
+        (= 0 @state/pieces-left-this-turn) nil
+        :else (do (swap! state/current-coords assoc key (get player :color))
+                  (swap! state/pieces-left-this-turn dec))))))
 
 (defn- ui-next-turn []
-  (let [player (get-current-player @turn)]
+  (let [player (get-current-player @state/turn)]
     (swap! (get player :pieces-left) dec)
-    (swap! turn inc)
-    (swap! piece-removed? not)
-    (reset! pieces-left-this-turn 1)))
+    (swap! state/turn inc)
+    (swap! state/piece-removed? not)
+    (reset! state/pieces-left-this-turn 1)))
 
 (defn- ui-board []
-  (let [coords @current-coords
-        player (get-current-player @turn)
-        current-mills (get-mills @current-coords)]
+  (let [coords @state/current-coords
+        player (get-current-player @state/turn)
+        current-mills (get-mills @state/current-coords)]
     [:div [:div.header
-           [:p (str "game status" @game-status)]
+           [:p (str "game status" @state/game-status)]
            [:p (str @(get player :name) " turn")]
            [:p (str "pieces left: " @(get player :pieces-left))]
            [:p (str "White mills: " (get current-mills :white))]
@@ -150,28 +134,28 @@
 
 (defn- set-player-name [event] ; TODO refactor
   (if (= "player1_name" (-> event .-target .-name))
-    (reset! (get player1 :name) (-> event .-target .-value))
-    (reset! (get player2 :name) (-> event .-target .-value))))
+    (reset! (get state/player1 :name) (-> event .-target .-value))
+    (reset! (get state/player2 :name) (-> event .-target .-value))))
 
 (defn- ui-start []
   [:div.container
-   (cond (= :not-started @game-status)
+   (cond (= :not-started @state/game-status)
          [:div.start
           [:input {:type :button
                    :value "Start"
                    :on-click #(init-game)}]]
-         (= :started @game-status)
+         (= :started @state/game-status)
          [:div
           [:label {:id "player1_name"}]
-          [:input {:name "player1_name" :default-value @(get player1 :name) :type :text :on-blur set-player-name}]
+          [:input {:name "player1_name" :default-value @(get state/player1 :name) :type :text :on-blur set-player-name}]
           [:br] [:br]
           [:label {:id "player2_name"}]
-          [:input {:name "player2_name" :default-value @(get player2 :name) :type :text :on-blur set-player-name}]
-          [:br] [:br] [:input {:type :button :value "Play!" :on-click #(do (swap! turn inc) (reset! game-status :placing))}]]
-         (or (= :placing @game-status) (= :moving @game-status)) [:div [ui-board]
-                                                                  [:br]
-                                                                  [:div.footer
-                                                                   [:input {:type :button :value "Reset game" :on-click reset-game}]]])])
+          [:input {:name "player2_name" :default-value @(get state/player2 :name) :type :text :on-blur set-player-name}]
+          [:br] [:br] [:input {:type :button :value "Play!" :on-click #(do (swap! state/turn inc) (reset! state/game-status :placing))}]]
+         (or (= :placing @state/game-status) (= :moving @state/game-status)) [:div [ui-board]
+                                                                              [:br]
+                                                                              [:div.footer
+                                                                               [:input {:type :button :value "Reset game" :on-click reset-game}]]])])
 
 (defn ^:export ^:dev/after-load run []
   (rdomc/render @root [ui-start]))

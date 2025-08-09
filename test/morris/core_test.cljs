@@ -12,7 +12,7 @@
                  [4 2] :white [4 3] nil [4 4] nil
                  [5 1] nil [5 3] nil [5 5] nil
                  [6 0] nil [6 3] nil [6 6] nil}]
-        (is (= (subject/get-mills coords) {:white [[[2 2] [3 2] [4 2]]] :black [[[0 0] [0 3] [0 6]]]})))
+        (is (= {:white [[[2 2] [3 2] [4 2]]] :black [[[0 0] [0 3] [0 6]]]} (subject/get-mills coords))))
   (testing "Get mills from given coords - simple case 2")
   (let* [coords {[4 3] nil, [3 4] nil, [0 0] :white,
                  [5 3] nil, [2 2] nil, [1 5] :black,
@@ -22,7 +22,7 @@
                  [0 6] :white, [1 1] :black, [6 0] nil,
                  [6 3] nil, [3 5] nil, [6 6] nil,
                  [0 3] :white, [3 6] nil, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[0 0] [0 3] [0 6]]] :black [[[1 1] [1 3] [1 5]]]})))
+        (is (= {:white [[[0 0] [0 3] [0 6]]] :black [[[1 1] [1 3] [1 5]]]} (subject/get-mills coords))))
   (testing "Get mills from given coords - simple case 3")
   (let* [coords
          {[4 3] nil, [3 4] :black, [0 0] nil,
@@ -33,7 +33,7 @@
           [0 6] nil, [1 1] nil, [6 0] nil,
           [6 3] nil, [3 5] :black, [6 6] nil,
           [0 3] nil, [3 6] :black, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[3 0] [3 1] [3 2]]] :black [[[3 4] [3 5] [3 6]]]})))
+        (is (= {:white [[[3 0] [3 1] [3 2]]] :black [[[3 4] [3 5] [3 6]]]} (subject/get-mills coords))))
   (testing "Get mills from given coords - diagonals 1")
   (let* [coords
          {[4 3] nil, [3 4] nil, [0 0] :white,
@@ -44,7 +44,7 @@
           [0 6] nil, [1 1] :black, [6 0] nil,
           [6 3] nil, [3 5] nil, [6 6] :black,
           [0 3] nil, [3 6] nil, [4 4] :black}]
-        (is (= (subject/get-mills coords) {:white [] :black []})))
+        (is (= {:white [] :black []} (subject/get-mills coords))))
   (testing "Get mills from given coords - diagonals 2")
   (let* [coords
          {[4 3] nil, [3 4] nil, [0 0] :white,
@@ -55,7 +55,7 @@
           [0 6] nil, [1 1] :white, [6 0] nil,
           [6 3] nil, [3 5] nil, [6 6] :black,
           [0 3] nil, [3 6] nil, [4 4] :black}]
-        (is (= (subject/get-mills coords) {:white [] :black []})))
+        (is (= {:white [] :black []} (subject/get-mills coords))))
   (testing "Get mills from given coords - intersection")
   (let* [coords
          {[4 3] nil, [3 4] nil, [0 0] :white,
@@ -66,8 +66,8 @@
           [0 6] :white, [1 1] :black, [6 0] :white,
           [6 3] nil, [3 5] nil, [6 6] nil,
           [0 3] :white, [3 6] nil, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[0 0] [3 0] [6 0]] [[0 0] [0 3] [0 6]]]
-                                           :black [[[1 1] [3 1] [5 1]] [[1 1] [1 3] [1 5]]]})))
+        (is (= {:white [[[0 0] [3 0] [6 0]] [[0 0] [0 3] [0 6]]]
+                :black [[[1 1] [3 1] [5 1]] [[1 1] [1 3] [1 5]]]} (subject/get-mills coords))))
 
   (testing "Get mills from given coords - central line 1")
   (let* [coords
@@ -79,7 +79,7 @@
           [0 6] nil, [1 1] nil, [6 0] nil,
           [6 3] nil, [3 5] :white, [6 6] nil,
           [0 3] nil, [3 6] :black, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [] :black []})))
+        (is (= {:white [] :black []} (subject/get-mills coords))))
 
   (testing "Get mills from given coords - central line 2")
   (let* [coords
@@ -91,7 +91,7 @@
           [0 6] nil, [1 1] :black, [6 0] nil,
           [6 3] nil, [3 5] nil, [6 6] nil,
           [0 3] :white, [3 6] nil, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[0 3] [1 3] [2 3]]] :black []})))
+        (is (= {:white [[[0 3] [1 3] [2 3]]] :black []} (subject/get-mills coords))))
 
   (testing "Get mills from given coords - central line 3")
   (let* [coords
@@ -103,7 +103,7 @@
           [0 6] nil, [1 1] :white, [6 0] nil,
           [6 3] :black, [3 5] nil, [6 6] nil,
           [0 3] :black, [3 6] nil, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[3 0] [3 1] [3 2]]] :black [[[0 3] [1 3] [2 3]] [[4 3] [5 3] [6 3]]]})))
+        (is (= {:white [[[3 0] [3 1] [3 2]]] :black [[[0 3] [1 3] [2 3]] [[4 3] [5 3] [6 3]]]} (subject/get-mills coords))))
 
   (testing "Get mills from given coords")
   (let* [coords
@@ -115,7 +115,7 @@
           [0 6] nil, [1 1] :white, [6 0] :white,
           [6 3] :black, [3 5] nil, [6 6] nil,
           [0 3] :black, [3 6] nil, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[0 0] [3 0] [6 0]] [[1 1] [3 1] [5 1]]] :black [[[0 3] [1 3] [2 3]] [[4 3] [5 3] [6 3]]]})))
+        (is (= {:white [[[0 0] [3 0] [6 0]] [[1 1] [3 1] [5 1]]] :black [[[0 3] [1 3] [2 3]] [[4 3] [5 3] [6 3]]]} (subject/get-mills coords))))
 
   (testing "Get mills from given coords")
   (let* [coords
@@ -127,8 +127,8 @@
           [0 6] :white, [1 1] :black, [6 0] nil,
           [6 3] :white, [3 5] :black, [6 6] nil,
           [0 3] :white, [3 6] :black, [4 4] nil}]
-        (is (= (subject/get-mills coords) {:white [[[4 3] [5 3] [6 3]] [[0 0] [0 3] [0 6]] [[2 2] [2 3] [2 4]]]
-                                           :black [[[3 0] [3 1] [3 2]] [[3 4] [3 5] [3 6]] [[1 1] [1 3] [1 5]]]}))))
+        (is (= {:white [[[4 3] [5 3] [6 3]] [[0 0] [0 3] [0 6]] [[2 2] [2 3] [2 4]]]
+                :black [[[3 0] [3 1] [3 2]] [[3 4] [3 5] [3 6]] [[1 1] [1 3] [1 5]]]} (subject/get-mills coords)))))
 
 (deftest can-remove-test
   (is (false? (subject/can-remove? []))))
