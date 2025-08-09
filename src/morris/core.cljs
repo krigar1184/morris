@@ -58,38 +58,42 @@
 (defn- get-current-player [turn]
   (if (odd? turn) player1 player2))
 
-(defn- is-mill? [coords cmp]
+(defn- is-mill? [cmp coords]
   (contains? possible-mills (sort-by cmp coords)))
 
-(defn- get-mills-from-color-group [coords]
-  (let* [mapped-by-i (->> coords
-                          (group-by first)
-                          vals
-                          (map #(partition 3 1 %))
-                          (map #(map (fn [v] (sort-by second v)) %))
-                          (map #(filter (fn [v] (is-mill? v second)) %)))
-         mapped-by-j (->> coords
-                          (group-by second)
-                          vals
-                          (map #(partition 3 1 %))
-                          (map #(map (fn [v] (sort-by first v)) %))
-                          (map #(filter (fn [v] (is-mill? v first)) %)))]
+(defn- partition-mills [cmp mills]
+  (loop [i 0 acc []]
+    (if (>= i (count mills)) (filter #(is-mill? cmp %) acc)
+        (let [m (nth mills i)
+              [a b] (split-at 3 m)]
+          (recur (inc i) (conj acc a b))))))
 
-        (->> (concat mapped-by-i mapped-by-j)
-             (remove empty?)
-             (map #(vec (first %)))
-             vec)))
+(defn- get-mills-from-color-group [coords]
+  (let* [cols (->> coords
+                   (group-by first)
+                   vals
+                   (filter #(>= (count %) 3))
+                   (mapv #(sort-by second %))
+                   (remove empty?)
+                   (partition-mills second))
+         rows (->> coords
+                   (group-by second)
+                   vals
+                   (filter #(>= (count %) 3))
+                   (mapv #(sort-by first %))
+                   (remove empty?)
+                   (partition-mills second))]
+        (->> (concat rows cols)
+             (map #(map vec %)))))
 
 (defn get-mills [coords]
-  (let* [grouped-fields (->> coords (group-by second))
+  (let* [grouped-fields (group-by second coords)
          whites (:white grouped-fields)
-         blacks (:black grouped-fields)]
-        {:white (->> whites
-                     keys
-                     get-mills-from-color-group)
-         :black (->> blacks
-                     keys
-                     get-mills-from-color-group)}))
+         blacks (:black grouped-fields)
+         mw (or (->> whites keys get-mills-from-color-group (mapv vec)) [])
+         mb (or (->> blacks keys get-mills-from-color-group (mapv vec)) [])]
+        {:white mw
+         :black mb}))
 
 (defn can-remove? [mills]
   (if @piece-removed? false
